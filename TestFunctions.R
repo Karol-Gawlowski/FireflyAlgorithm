@@ -1,4 +1,6 @@
-# Funkcje do optymalizacji - zastosowano przeksztaÅcenie f(x)->-f(x) 
+# Functions to test optimization
+# Note - where necessary: we replace f(x) with -f(x) 
+
 OPT_Sphere = function(x,y){         # (0,0)
   -(x^2+y^2)
 }
