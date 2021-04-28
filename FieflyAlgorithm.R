@@ -5,11 +5,12 @@ options(scipen=999)
 set.seed(1)
 
 # Test the algorithm
-TEST=Firefly_Algorithm(Iterations = 1000, 
-                       Bounds = 10, 
+TEST=Firefly_Algorithm(Iterations = 10000, 
+                       Bounds = 5, # limits for initialization of fireflies' positions
                        RandomCoef = 0.3, 
-                       MaxGeneration = 30, 
-                       Function = OPT_Sphere)
+                       LightAbsorbtion=2, # >1 the more attracted the fireflies' are to each other 
+                       Fireflies_Count=30,
+                       Function = OPT_Xin_She_Yang)
 
 # Generate the light intensity (test function value)
 # plot parameter is used for debugging
@@ -56,7 +57,6 @@ Firefly_Algorithm=
   function(
     Iterations,
     MaxAttraction=1,
-    MaxGeneration=20,
     LightAbsorbtion=1,
     RandomCoef=0.2,
     Fireflies_Count=20,
@@ -102,8 +102,13 @@ Firefly_Algorithm=
     # get bounds
     LevelCurves=LevelCurve_Function(from = -Bounds,
                                     to = Bounds,
+                                    by=0.2,
                                     Function=Function)
 
+    # for plot centering, these bounds depend on the number of level curves generated
+    U_Bound=max(LevelCurves[,c(1,2)])
+    L_Bound=min(LevelCurves[,c(1,2)])
+    
     # initial prop of fireflies converging to optimum
     Success=1
     
@@ -111,7 +116,7 @@ Firefly_Algorithm=
     for (i in 1:Fireflies_Count){
       # overlay fireflies' positions on the level curves
       # note that the way these coordinates are stored is such, just for the way ggplot takes in the objects
-      if (Fireflies_Coord[i,1]<Bounds && Fireflies_Coord[i,1]>-Bounds && Fireflies_Coord[i,2]<Bounds && Fireflies_Coord[i,2]>-Bounds){
+      if (Fireflies_Coord[i,1]<U_Bound && Fireflies_Coord[i,1]>L_Bound && Fireflies_Coord[i,2]<U_Bound && Fireflies_Coord[i,2]>L_Bound){
         LevelCurves[i,4]=Fireflies_Coord[i,1]
         LevelCurves[i,5]=Fireflies_Coord[i,2]
       }else{
@@ -124,18 +129,21 @@ Firefly_Algorithm=
     LevelCurves=as.data.frame(LevelCurves)
     colnames(LevelCurves)=c("X","Y","Z","F_X","F_Y")
     
-    v = ggplot(LevelCurves, aes(X, Y, z = Z, fill=Z)) + 
-      stat_contour(aes()) +
-      scale_fill_gradient(low = "blue",
-                          high = "red",
-                          guide = "colourbar") +
+    v = ggplot(LevelCurves, aes(X, Y, z = Z)) + 
+      stat_contour_filled(aes()) +
+      # scale_fill_gradient(low = "blue",
+      #                     high = "red",
+      #                     guide = "colourbar",
+      #                     aesthetics = "fill") +
       geom_point(aes(x=F_X, y=F_Y)) +
-      ggtitle(paste("LevelCurves, (",Success*100,"% Of Fireflies within bounds)",sep = "")) +
-      theme(plot.title = element_text(hjust = 0.5),panel.background = element_blank())
-    
+      ggtitle("Optimization results") +
+      theme(plot.title = element_text(hjust = 0.5),panel.background = element_blank())+
+      xlim(-2.5,2.5)+ #hardcoded, because the functions used to test, have optima near the origin
+      ylim(-2.5,2.5)
     
     print(v)
     print(Fireflies_Coord[which.max(Fireflies_Coord[,3]),])
     return(list(REPO,v))
   }
+
 
